@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin  
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "pgadmin@pgadmin.com"
+      PGADMIN_DEFAULT_PASSWORD: "pgadmin"
+    ports:
+      - "8082:80"
+
+volumes:
+  pgadmin_data:
+    driver: local
