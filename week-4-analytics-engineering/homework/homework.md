@@ -135,13 +135,23 @@ You might want to add some new dimensions `year` (e.g.: 2019, 2020), `quarter` (
   * e.g.: In 2020/Q1, Green Taxi had -12.34% revenue growth compared to 2019/Q1
   * e.g.: In 2020/Q4, Yellow Taxi had +34.56% revenue growth compared to 2019/Q4
 
+```sql
+  SELECT 
+      year_quarter, 
+      service_type,
+      SUM(total_amount) AS quarterly_revenue
+  FROM 
+      `dataengineerzoomcamp-449116.dbt_jsim.fct_taxi_trips`
+  WHERE 
+      year_quarter BETWEEN '2019/Q1' AND '2020/Q4'
+  GROUP BY 
+      year_quarter, service_type
+```
+
 Considering the YoY Growth in 2020, which were the yearly quarters with the best (or less worse) and worst results for green, and yellow
 
-- green: {best: 2020/Q2, worst: 2020/Q1}, yellow: {best: 2020/Q2, worst: 2020/Q1}
-- green: {best: 2020/Q2, worst: 2020/Q1}, yellow: {best: 2020/Q3, worst: 2020/Q4}
-- green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q2, worst: 2020/Q1}
 - green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q1, worst: 2020/Q2}
-- green: {best: 2020/Q1, worst: 2020/Q2}, yellow: {best: 2020/Q3, worst: 2020/Q4}
+
 
 
 ### Question 6: P97/P95/P90 Taxi Monthly Fare
@@ -150,13 +160,31 @@ Considering the YoY Growth in 2020, which were the yearly quarters with the best
 2. Filter out invalid entries (`fare_amount > 0`, `trip_distance > 0`, and `payment_type_description in ('Cash', 'Credit Card')`)
 3. Compute the **continous percentile** of `fare_amount` partitioning by service_type, year and and month
 
+```sql 
+  SELECT DISTINCT
+      service_type,
+      PERCENTILE_CONT(fare_amount, 0.97) OVER (
+          PARTITION BY service_type, year, month
+      ) AS fare_p97,
+      PERCENTILE_CONT(fare_amount, 0.95) OVER (
+          PARTITION BY service_type, year, month
+      ) AS fare_p95,
+      PERCENTILE_CONT(fare_amount, 0.90) OVER (
+          PARTITION BY service_type, year, month
+      ) AS fare_p90
+  FROM `dataengineerzoomcamp-449116.dbt_jsim.fct_taxi_trips_monthly_fare_p95`
+  WHERE 
+      service_type IN ('Green', 'Yellow')
+      AND year = 2020
+      AND month = 4
+```
+
+![alt text](image.png)
+
 Now, what are the values of `p97`, `p95`, `p90` for Green Taxi and Yellow Taxi, in April 2020?
 
-- green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 52.0, p95: 37.0, p90: 25.5}
 - green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 31.5, p95: 25.5, p90: 19.0}
-- green: {p97: 40.0, p95: 33.0, p90: 24.5}, yellow: {p97: 52.0, p95: 37.0, p90: 25.5}
-- green: {p97: 40.0, p95: 33.0, p90: 24.5}, yellow: {p97: 31.5, p95: 25.5, p90: 19.0}
-- green: {p97: 55.0, p95: 45.0, p90: 26.5}, yellow: {p97: 52.0, p95: 25.5, p90: 19.0}
+
 
 
 ### Question 7: Top #Nth longest P90 travel time Location for FHV
@@ -174,10 +202,6 @@ Now...
 For the Trips that **respectively** started from `Newark Airport`, `SoHo`, and `Yorkville East`, in November 2019, what are **dropoff_zones** with the 2nd longest p90 trip_duration ?
 
 - LaGuardia Airport, Chinatown, Garment District
-- LaGuardia Airport, Park Slope, Clinton East
-- LaGuardia Airport, Saint Albans, Howard Beach
-- LaGuardia Airport, Rosedale, Bath Beach
-- LaGuardia Airport, Yorkville East, Greenpoint
 
 
 ## Submitting the solutions
