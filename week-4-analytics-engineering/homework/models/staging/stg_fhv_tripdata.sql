@@ -7,10 +7,8 @@
 
 with tripdata as 
 (
-  select *,
-    row_number() over(partition by dispatching_base_num, pickup_datetime) as rn
+  select *
   from {{ source('staging','fhv') }}
-  where dispatching_base_num is not null 
 )
 
 select
@@ -28,7 +26,8 @@ select
     Affiliated_base_number as affiliated_base_number,
     
 from tripdata
-where rn = 1
+where dispatching_base_num is not null
+
 
 -- dbt build --select <model_name> --vars '{'is_test_run': 'false'}'
 {% if var('is_test_run', default=true) %}
